@@ -10,26 +10,23 @@ class Program
         int result = 0;
         int currentPosition = 50;
 
+        // Let's just brute-force it... why not - it's Christmas! :o)
         foreach (string currentInstruction in File.ReadLines(inputFilename))
         {
             int direction = currentInstruction[0].Equals('R') ? 1 : -1;
             _ = int.TryParse(currentInstruction[1..], out int magnitude);
 
-            currentPosition += magnitude * direction;
-
-            while (currentPosition < 0)
+            for (int x = 0; x < magnitude; x++)
             {
-                currentPosition += dialSize;
-            }
+                currentPosition += direction;
 
-            while (currentPosition > dialSize - 1)
-            {
-                currentPosition -= dialSize;
-            }
+                if (currentPosition < 0) currentPosition = dialSize - 1;
+                else if (currentPosition == dialSize) currentPosition = 0;
 
-            if (currentPosition == 0)
-            {
-                result ++;
+                if (currentPosition == 0)
+                {
+                    result ++;
+                }
             }
         }
 
