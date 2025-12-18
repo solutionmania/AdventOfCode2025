@@ -76,15 +76,34 @@ class Program
     {
         string valueString = value.ToString();
 
-        // If the string representation isn't an even number of characters long, it must be valid
-        if (valueString.Length % 2 != 0)
+        // Look for reapeating patterns of lengths from 1 character up to half the length of the string
+        for (int patternLen = 1; patternLen <= valueString.Length / 2; patternLen ++)
         {
-            return true;
-        }
+            // Check the length of the string is an exact multiple of the pattern length
+            if (valueString.Length % patternLen == 0)
+            {
+                string lastSegment = valueString[0..patternLen];
 
-        if (valueString[..(valueString.Length / 2)].Equals(valueString[(valueString.Length / 2)..]))
-        {
-            return false;
+                int patternStart = patternLen;
+                while(patternStart + patternLen <= valueString.Length)
+                {
+                    if (valueString[patternStart..(patternStart + patternLen)].Equals(lastSegment))
+                    {
+                        lastSegment = valueString[patternStart..(patternStart + patternLen)];
+                        patternStart += patternLen;                        
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // If we got to the end of the string, the pattern must have repeated all the way through
+                if (patternStart + patternLen > valueString.Length)
+                {
+                    return false;
+                }
+            }
         }
 
         return true;
