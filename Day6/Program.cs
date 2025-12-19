@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 
 namespace Day6;
 
@@ -14,54 +15,68 @@ class Program
 
     static void Main(string[] args)
     {
-        List<List<long>> problemOperands = [];
-        List<Operator> problemOperators = [];
+        List<string> problemOperandRows = [];
+        string problemOperators = string.Empty;
 
         // Retrieve question data
         foreach (string currentLine in File.ReadLines(inputFilename))
         {
-            // Remove duplicate spaces
-            string processedLine = Regex.Replace(currentLine, @"\s+", " ");
-
-            string[] tokens = [.. processedLine.Split(' ').Where(t => !string.IsNullOrWhiteSpace(t))];
-
-            if (tokens[0].Equals("+") || tokens[0].Equals("*"))
+            if (currentLine[0] == '+' || currentLine[0] == '*')
             {
-                problemOperators = [.. tokens.Select(o => o.Equals("*") ? Operator.Multiply : Operator.Add)];
+                problemOperators = currentLine;
             }
             else
             {
-                problemOperands.Add([.. tokens.Select(o => Convert.ToInt64(o))]);
+                problemOperandRows.Add(currentLine);
             }
         }
 
-        // Calculate the results
-        long[] problemResults = new long[problemOperators.Count];
-
-        for (int p = 0; p < problemOperators.Count; p++)
+        // Iterate the problems, using the operator positions as column boundary markers
+        int x = 0;
+        long totalOfResults = 0;
+        while(x < problemOperators.Length)
         {
-            // When we're multiplying, we need to initialise our starting value to 1, not 0
-            if (problemOperators[p] == Operator.Multiply)
+            int nextX = x + 1;
+            while (problemOperators[nextX] == ' ')
             {
-                problemResults[p] = 1;
-            }
+                nextX++;
 
-            for (int o = 0; o < problemOperands.Count; o ++)
-            {
-                switch (problemOperators[p])
+                if (nextX == problemOperators.Length)
                 {
-                    case Operator.Add:
-                        problemResults[p] += problemOperands[o][p];
-                        break;
-                    
-                    case Operator.Multiply:
-                        problemResults[p] *= problemOperands[o][p];
-                        break;
+                    nextX++;
+                    break;
                 }
             }
-        }
 
-        long totalOfResults = problemResults.Sum();
+            // Iterate the operand rows, a column at a time, from right to left
+            long currentResult = 0;
+            for (int col = nextX - 2; col >= x; col--)
+            {
+                long currentOperand = 0;
+
+                for (int row = 0; row < problemOperandRows.Count; row++)
+                {
+                    if (problemOperandRows[row][col] != ' ')
+                    {
+                        _ = int.TryParse(problemOperandRows[row][col].ToString(), out int currentDigit);
+                        
+                        currentOperand = (currentOperand == 0) ? currentDigit : currentOperand * 10 + currentDigit;
+                    }
+                }
+
+                if (problemOperators[x] == '+')
+                {
+                    currentResult += currentOperand;
+                }
+                else
+                {
+                    currentResult = (currentResult == 0) ? currentOperand : currentResult * currentOperand;
+                }
+            }
+
+            totalOfResults += currentResult;
+            x = nextX;
+        }
 
         Console.WriteLine($"Total of all results: {totalOfResults}");
     }
