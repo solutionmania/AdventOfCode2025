@@ -6,13 +6,13 @@ class Program
 
     static void Main(string[] args)
     {
-        int totalJoltage = 0;
+        long totalJoltage = 0;
 
         foreach (string currentBank in File.ReadLines(inputFilename))
         {
             Console.WriteLine($"Processing Bank: {currentBank}");
 
-            int joltage = HighestTwoDigits(currentBank);
+            long joltage = HighestNDigits(currentBank, 12);
             Console.WriteLine($"\tHighest joltage: {joltage}");
 
             totalJoltage += joltage;
@@ -21,29 +21,37 @@ class Program
         Console.WriteLine($"{Environment.NewLine}Total joltage: {totalJoltage}");
     }
 
-    static int HighestTwoDigits(string input)
+    static long HighestNDigits(string input, int digitCount)
     {
-        int highestFirstDigitPos = 0;
-        for (int x = 1; x < input.Length - 1; x ++)
-        {
-            if (input[x] > input[highestFirstDigitPos])
-            {
-                highestFirstDigitPos = x;
-            }
-        }
+        int highestDigitPos = 0;
+        string result = string.Empty;
 
-        int highestSecondDigitPos = highestFirstDigitPos + 1;
-        for (int x = highestSecondDigitPos; x < input.Length; x ++)
+        // Loop once for each digit in the output
+        for (int d = 0; d < digitCount; d ++)
         {
-            if (input[x] > input[highestSecondDigitPos])
+            // Iterate the possible digits which could be used for the current digit (d) of the output
+
+            // 01234567890123456789 : Input length = 20
+            // xxxxxxxxx12345678901 : Digit Count = 12, x = possible first digit positions
+
+            int earliestPos = d == 0 ? 0 : highestDigitPos + 1;
+            int latestPos = input.Length - digitCount + d;
+            highestDigitPos = earliestPos;
+
+            for (int x = earliestPos; x <= latestPos; x++)
             {
-                highestSecondDigitPos = x;
+                if (input[x] > input[highestDigitPos])
+                {
+                    highestDigitPos = x;
+                }
             }
+
+            result += input[highestDigitPos];
         }
 
         // Assume success!
-        _ = int.TryParse($"{input[highestFirstDigitPos]}{input[highestSecondDigitPos]}", out int result);
+        _ = long.TryParse(result, out long resultVal);
 
-        return result;
+        return resultVal;
     }
 }
