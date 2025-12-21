@@ -1,53 +1,68 @@
-﻿namespace Day7;
+﻿using System.Net;
+using System.Security.Cryptography.X509Certificates;
+
+namespace Day7;
 
 class Program
 {
     const string inputFilename = @"C:\Users\chris\OneDrive\Hobbies\Coding\Advent of Code 2025\day-7-input.txt";
 
+    private static readonly List<string> _tachyonManifold = [];
+    private static readonly Dictionary<(int splitterX, int splitterY), long> _cache = [];
+
     static void Main(string[] args)
     {
-        bool started = false;
-        int[] activeStreams = [];
-        int splitCount = 0;
-        int lineCount = 1;
-
+        // Read and store all of the source data
         foreach (string currentLine in File.ReadLines(inputFilename))
         {
-            if (!started)
-            {
-                activeStreams = new int[currentLine.Length];
-
-                // Look for the starting stream
-                for (int x = 0; x < currentLine.Length; x++)
-                {
-                    if (currentLine[x] == 'S')
-                    {
-                        activeStreams[x] = lineCount;
-                        started = true;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                // Check whether any of our existing streams have hit a splitter
-                for (int x = 0; x < currentLine.Length; x ++)
-                {
-                    if (activeStreams[x] > 0
-                        && activeStreams[x] <= lineCount 
-                        && currentLine[x] == '^')
-                    {
-                        splitCount++;
-                        activeStreams[x - 1] = lineCount + 1;
-                        activeStreams[x] = 0;
-                        activeStreams[x + 1] = lineCount + 1;
-                    }
-                }
-            }
-
-            lineCount++;
+            _tachyonManifold.Add(currentLine);
         }
 
-        Console.WriteLine($"Number of Splits: {splitCount}");
+        // Look for the starting stream
+        int startPos = 0;
+        for (int x = 0; x < _tachyonManifold[0].Length; x++)
+        {
+            if (_tachyonManifold[0][x] == 'S')
+            {
+                startPos = x;
+                break;
+            }
+        }
+
+        long timelineCount = 1 + CountTimelines(startPos, 1);
+        Console.WriteLine($"Total number of timelines: {timelineCount}");
+    }
+
+    private static long CountTimelines(int splitterX, int splitterY)
+    {
+        if (_cache.ContainsKey((splitterX, splitterY)))
+        {
+            return _cache[(splitterX, splitterY)];
+        }
+
+        int nextLeftSplitterY = FindNextSplitterY(splitterX - 1, splitterY);
+        int nextRightSplitterY = FindNextSplitterY(splitterX + 1, splitterY);
+
+        _cache[(splitterX, splitterY)] = 1 
+                                         + (nextLeftSplitterY == -1 ? 0 : CountTimelines(splitterX - 1, nextLeftSplitterY))
+                                         + (nextRightSplitterY == -1 ? 0 : CountTimelines(splitterX + 1, nextRightSplitterY));
+
+        return _cache[(splitterX, splitterY)];
+    }
+
+    private static int FindNextSplitterY(int splitterX, int startY)
+    {
+        while (startY < _tachyonManifold.Count
+               && _tachyonManifold[startY][splitterX] != '^')
+        {
+            startY++;
+        }
+
+        if (startY == _tachyonManifold.Count)
+        {
+            return -1;
+        }
+
+        return startY;
     }
 }
